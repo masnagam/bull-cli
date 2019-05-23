@@ -1,0 +1,64 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+const Queue = require('bull');
+const streamToString = require('stream-to-string');
+const path = require('path');
+
+const PROG = path.basename(__filename);
+
+const HELP = `
+Description:
+  This command adds a job to a specified queue.
+
+  Parameters for the job have to be provided via STDIN as a JSON string like
+  below:
+
+    $ echo '{ "url": "http://example.com/video1.ts" }' | \\
+        ${PROG} -u redis://remote:6379 -q transcode -j video
+`;
+
+class JsonObject {
+  toString() { return JSON.stringify(this); }
+}
+
+const DEFAULTS = {
+  URL: 'redis://localhost:6379',
+  QUEUE_OPTIONS: new JsonObject,
+  JOB_OPTIONS: new JsonObject,
+};
+
+program
+  .description(
+    'Add a job to a queue')
+  .option(
+    '-u, --url <URL>',
+    'Redis URL', DEFAULTS.URL)
+  .option(
+    '-q, --queue <NAME>',
+    'Queue name')
+  .option(
+    '-Q, --queue-options <JSON>',
+    'Queue options in JSON format',
+    JSON.parse, DEFAULTS.QUEUE_OPTIONS)
+  .option(
+    '-j, --job <NAME>',
+    'Job name')
+  .option(
+    '-J, --job-options <JSON>',
+    'Job options in JSON format',
+    JSON.parse, DEFAULTS.JOB_OPTIONS)
+  .on('--help', () => console.log(HELP))
+  .action(main)
+  .parse(process.argv);
+
+async function main(options) {
+  const queue = Queue(options.queue, options.url, options.queueOptions);
+  const json = await streamToString(process.stdin);
+  const jobParams = JSON.parse(json);
+  const job = await queue.add(options.job, jobParams, options.jobOptions);
+  console.log(job.id)
+  process.exit(0);
+}

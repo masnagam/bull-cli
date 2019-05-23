@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+const Queue = require('bull');
+const path = require('path');
+const debug = require('debug')('bull-cli:process');
+
+const PROG = path.basename(__filename);
+
+const HELP = `
+Description:
+  This command processes jobs in a queue.
+`;
+
+class JsonObject {
+  toString() { return JSON.stringify(this); }
+}
+
+const DEFAULTS = {
+  URL: 'redis://localhost:6379',
+  QUEUE_OPTIONS: new JsonObject,
+  CONCURRENCY: 1,
+};
+
+program
+  .description(
+    'Process jobs in a queue')
+  .option(
+    '-u, --url <URL>',
+    'Redis URL', DEFAULTS.URL)
+  .option(
+    '-q, --queue <NAME>',
+    'Queue name')
+  .option(
+    '-Q, --queue-options <JSON>',
+    'Queue options in JSON format',
+    JSON.parse, DEFAULTS.QUEUE_OPTIONS)
+  .option(
+    '-j, --job <NAME>',
+    'Job name')
+  .option(
+    '-c, --concurrency <NUM>',
+    'Concurrency',
+    parseInt, DEFAULTS.CONCURRENCY)
+  .arguments(
+    '<script>',
+    'Path to a JavaScript script file')
+  .on('--help', () => console.log(HELP))
+  .action(main)
+  .parse(process.argv);
+
+async function main(script, options) {
+  const EVENTS = [
+    'error', 'waiting', 'active', 'stalled', 'progress', 'completed', 'failed',
+    'paused', 'resumed', 'cleaned', 'drained', 'removed',
+  ];
+
+  const LOG = EVENTS.reduce((log, evt) => {
+    log[evt] = debug.extend(evt);
+    return log;
+  }, {});
+
+  const queue = new Queue(options.queue, options.url,
+                          JSON.parse(options.queueOptions));
+  queue
+    .on('error', (err) => LOG.error(err))
+    .on('waiting', (jobId) => LOG.waiting(jobId))
+    .on('active', (job) => LOG.active(job.id))
+    .on('stalled', (job) => LOG.stalled(job.id))
+    .on('progress', (job, progress) => LOG.progress(job.id, progress))
+    .on('completed', (job, result) => LOG.completed(job.id, result))
+    .on('failed', (job, err) => LOG.failed(job.id, err))
+    .on('paused', () => LOG.paused(''))
+    .on('resumed', (job) => LOG.resumed(job.id))
+    .on('cleaned', (job, type) => LOG.cleaned(job.id, type))
+    .on('drained', () => LOG.drained(''))
+    .on('removed', (job) => LOG.removed(job.id));
+
+  queue.process(options.job, options.concurrency, path.resolve(script));
+}

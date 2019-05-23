@@ -1,0 +1,21 @@
+{
+  "name": "@masnagam/bull-cli",
+  "version": "0.1.0",
+  "description": "CLI for Bull",
+  "bin": {
+    "bull": "bull",
+    "bull-add": "bull-add",
+    "bull-process": "bull-process"
+  },
+  "keywords": ["bull", "cli"],
+  "author": "Masayuki Nagamachi <masayuki.nagamachi@gmail.com>",
+  "repository": "masnagam/bull-cli",
+  "license": "MIT",
+  "dependencies": {
+    "bull": "^3.9.1",
+    "commander": "^2.20.0",
+    "debug": "^4.1.1",
+    "stream-to-string": "^1.2.0"
+  },
+  "files": ["bull", "bull-*"]
+}
