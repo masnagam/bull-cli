@@ -13,7 +13,7 @@ $ docker run -p 6379:6379 redis:alpine
 Add a `video` job to a `transcode` queue:
 
 ```console
-$ echo '{ "url": "http://example.com/video1.ts" }' | \
+$ echo '{ "url": "http://example.com/video1" }' | \
     bull add -q transcode -j video
 1  # the identifier of the job
 ```
@@ -27,6 +27,9 @@ $ DEBUG=bull-cli:* bull process -q transcode -j video examples/success.js
   bull-cli:process:completed 1 { result: 'OK' } +0ms
   bull-cli:process:drained  +0ms
 ```
+
+See the help for each sub-command, which is shown by
+`bull-cli help <sub-command>`.
 
 ## License
 
