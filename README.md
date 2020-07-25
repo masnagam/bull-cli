@@ -2,6 +2,8 @@
 
 > CLI for [Bull]
 
+[![CI](https://github.com/masnagam/bull-cli/workflows/CI/badge.svg)](https://github.com/masnagam/bull-cli/actions?query=workflow%3ACI)
+
 ## How to use
 
 Before using `bull-cli`, you need to launch a Redis server:
