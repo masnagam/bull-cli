@@ -55,10 +55,15 @@ program
   .parse(process.argv);
 
 async function main(options) {
-  const queue = Queue(options.queue, options.url, options.queueOptions);
-  const json = await streamToString(process.stdin);
-  const jobParams = JSON.parse(json);
-  const job = await queue.add(options.job, jobParams, options.jobOptions);
-  console.log(job.id)
-  process.exit(0);
+  try {
+    const queue = Queue(options.queue, options.url, options.queueOptions);
+    const json = await streamToString(process.stdin);
+    const jobParams = JSON.parse(json);
+    const job = await queue.add(options.job, jobParams, options.jobOptions);
+    console.log(job.id);
+    process.exit(0);
+  } catch (err) {
+    console.error(`Failed to add the job: ${err}`);
+    process.exit(1);
+  }
 }
