@@ -1,3 +1,7 @@
+# DO NOT USE THIS REPOSITORY ANYMORE
+
+We stopped maintaining this repository.
+
 # @masnagam/bull-cli
 
 > CLI for [Bull]
